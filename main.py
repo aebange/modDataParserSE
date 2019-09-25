@@ -85,11 +85,14 @@ class Ammo:
 
 
 class AmmoMagazine:
-    def __init__(self, name, capacity):
+    def __init__(self, name, capacity, corresponding_ammo):
         # (String) Used for storing the name of the ammo magazine
         self.name = name
         # (Integer) Used for storing the amount of ammo stored inside this magazine item
         self.capacity = capacity
+        # (String) Used for storing the name of the ammo that goes with this magazine
+        self.corresponding_ammo = corresponding_ammo
+
 
 
 WEAPON_KEY_STRING_PHRASES = ['<SubtypeId>', '<AmmoMagazine Subtype=']
@@ -97,7 +100,7 @@ WEAPON_KEY_INT_PHRASES = ['RateOfFire=', 'ShotsInBurst=', '<ReleaseTimeAfterFire
 WEAPON_KEY_FLOAT_PHRASES = ['<DeviateShotAngle>']
 AMMO_KEY_STRING_PHRASES = ['<SubtypeId>', '<PhysicalMaterial>', '<IsExplosive>']
 AMMO_KEY_INT_PHRASES = ['<DesiredSpeed>', '<MaxTrajectory>', '<BackkickForce>', '<ProjectileHitImpulse>', '<MissileExplosionRadius>', '<ProjectileMassDamage>', '<MissileExplosionDamage>', '<ProjectileHealthDamage>', '<MissileHealthDamage>']
-AMMO_MAGAZINE_KEY_STRING_PHRASES = ['<SubtypeId>']
+AMMO_MAGAZINE_KEY_STRING_PHRASES = ['<SubtypeId>', 'Subtype=']
 AMMO_MAGAZINE_KEY_INT_PHRASES = ['<Capacity>']
 
 
@@ -109,174 +112,178 @@ def main():
     local_ammo_list = []
     target_file = 1
     local_cwd = os.getcwd()
+    root_directory = os.getcwd()
     local_cwd_files = {}
     file_number = 0
-    for file in reversed(os.listdir(local_cwd)):
-        if file.endswith('.sbc'):
-            file_number += 1
-            local_cwd_files.update({file_number: file})
-            directory_quantity = len(local_cwd_files)
-        else:
-            pass
-    while True:
-        print("-" * SCREEN_WIDTH)
-        for key, value in local_cwd_files.items():
-            print(key, value)
-        print("-" * SCREEN_WIDTH)
-        print("Press Enter to parse all .sbc files.")
-        print("Just close this program from this menu when you're done.")
-        garbage_input = input()
-        break
-    while target_file <= directory_quantity:
-        # os.system('cls')
-        # We now have a spreadsheet with the headers established and frozen, time to read the data.
-        print("Working")
-        local_file = open(local_cwd_files[int(target_file)])
-        print("Processing file {}".format(str(local_file)))
-        local_current_object = None
-        local_whitespace_count = 0
-        while True:
-            local_line = local_file.readline()
-            # Check the lines contents
-            if not local_line:
-                # There's nothing inside
-                if local_current_object:
-                    local_current_object = None
-                local_whitespace_count += 1
-                if local_whitespace_count > 25:
-                    # The file must be out of content
-                    break
-                pass
-            elif '<Weapon>' in local_line:
-                # We have encountered the start of a weapon description
-                local_current_object = Weapon('n/a', 0, 1, 0, 0.0, 'n/a', 0, 'n/a', 0, 0, 'n/a', 0, 'n/a', 0, 0, 0, 0, 0, 0, 'n/a', 0)
-                while True:
-                    local_line = local_file.readline()
-                    if not local_line:
-                        # There's nothing inside
-                        local_current_object = None
-                        break
-                    else:
-                        if "</Weapon>" in local_line:
-                            # The object is complete
-                            print("Weapon object created")
-                            print("Object named: {}".format(local_current_object.name))
-                            local_weapon_list.append(local_current_object)
-                            local_current_object = None
-                            break
-                        for phrase in WEAPON_KEY_STRING_PHRASES:
-                            # Check to see if any phrases are in the string
-                            if phrase in local_line:
-                                # The phrase is in the string
-                                # Remove the value from the string
-                                local_current_value = str(remove_term(local_line, phrase))
-                                # Apply the value to the corresponding object attribute
-                                update_attr(local_current_object, phrase, local_current_value)
-                            else:
-                                pass
-                        for phrase in WEAPON_KEY_FLOAT_PHRASES:
-                            if phrase in local_line:
-                                # The phrase is in the string
-                                # Remove the value from the string
-                                local_current_value = float(remove_term(local_line, phrase))
-                                # Apply the value to the corresponding object attribute
-                                update_attr(local_current_object, phrase, local_current_value)
-                            else:
-                                pass
-                        for phrase in WEAPON_KEY_INT_PHRASES:
-                            if phrase in local_line:
-                                # The phrase is in the string
-                                # Remove the value from the string
-                                local_current_value = int(remove_term(local_line, phrase))
-                                # Apply the value to the corresponding object attribute
-                                update_attr(local_current_object, phrase, local_current_value)
-                            else:
-                                pass
-            elif '<Ammo xsi:type=' in local_line:
-                # We have encountered the start of an ammo description
-                local_current_object = Ammo('n/a', 0, 0, 'n/a', 0, 'n/a', 0, 0, 0, 0, 0, 0)
-                while True:
-                    local_line = local_file.readline()
-                    if not local_line:
-                        # There's nothing inside
-                        local_current_object = None
-                        break
-                    else:
-                        if "</Ammo>" in local_line:
-                            # The object is complete
-                            local_ammo_list.append(local_current_object)
-                            print("Ammo object created")
-                            print("Object named: {}".format(local_current_object.name))
-                            local_current_object = None
-                            break
-                        for phrase in AMMO_KEY_STRING_PHRASES:
-                            # Check to see if any phrases are in the string
-                            if phrase in local_line:
-                                # The phrase is in the string
-                                # Remove the value from the string
-                                local_current_value = str(remove_term(local_line, phrase))
-                                # Apply the value to the corresponding object attribute
-                                update_attr(local_current_object, phrase, local_current_value)
-                            else:
-                                pass
-                        for phrase in AMMO_KEY_INT_PHRASES:
-                            if phrase in local_line:
-                                # The phrase is in the string
-                                # Remove the value from the string
-                                local_current_value = (int(float(remove_term(local_line, phrase))))
-                                # Apply the value to the corresponding object attribute
-                                update_attr(local_current_object, phrase, local_current_value)
-                            else:
-                                pass
-            elif '<AmmoMagazine>' in local_line:
-                # We have encountered the start of an ammo magazine description
-                local_current_object = AmmoMagazine('n/a', 0)
-                while True:
-                    local_line = local_file.readline()
-                    if not local_line:
-                        # There's nothing inside
-                        local_current_object = None
-                        break
-                    else:
-                        if "</AmmoMagazine>" in local_line:
-                            # The object is complete
-                            local_ammo_magazine_list.append(local_current_object)
-                            print("Ammo Magazine Object created")
-                            print("Object named: {}".format(local_current_object.name))
-                            local_current_object = None
-                            break
-                        for phrase in AMMO_MAGAZINE_KEY_STRING_PHRASES:
-                            # Check to see if any phrases are in the string
-                            if phrase in local_line:
-                                # The phrase is in the string
-                                # Remove the value from the string
-                                local_current_value = str(remove_term(local_line, phrase))
-                                # Apply the value to the corresponding object attribute
-                                update_attr(local_current_object, phrase, local_current_value)
-                            else:
-                                pass
-                        for phrase in AMMO_MAGAZINE_KEY_INT_PHRASES:
-                            if phrase in local_line:
-                                # The phrase is in the string
-                                # Remove the value from the string
-                                local_current_value = int(remove_term(local_line, phrase))
-                                # Apply the value to the corresponding object attribute
-                                update_attr(local_current_object, phrase, local_current_value)
-                            else:
-                                pass
-            elif '</Definitions>' in local_line:
-                # The file is out of data
-                target_file += 1
-                break
+    directory_quantity = 0
+    directory_tree = os.walk(local_cwd, topdown=True)
+    for location in directory_tree:
+        os.chdir(location[0])
+        print("Checking inside of {} for .sbcs".format(os.getcwd()))
+        for file in reversed(os.listdir(os.getcwd())):
+            if file.endswith('.sbc'):
+                print("Found .sbc file called {} inside of {}".format(str(file), os.getcwd()))
+                file_number += 1
+                local_cwd_files.update({file_number: file})
+                directory_quantity = len(local_cwd_files)
             else:
-                pass
+                print("No .sbc found inside of {}".format(os.getcwd()))
+        while target_file <= directory_quantity:
+            # os.system('cls')
+            # We now have a spreadsheet with the headers established and frozen, time to read the data.
+            print("Working")
+            local_file = open(local_cwd_files[int(target_file)])
+            print("Processing file {}".format(str(local_file)))
+            local_current_object = None
+            local_whitespace_count = 0
+            while True:
+                local_line = local_file.readline()
+                # Check the lines contents
+                if not local_line:
+                    # There's nothing inside
+                    if local_current_object:
+                        local_current_object = None
+                    local_whitespace_count += 1
+                    if local_whitespace_count > 25:
+                        # The file must be out of content
+                        break
+                    pass
+                elif '<Weapon>' in local_line:
+                    # We have encountered the start of a weapon description
+                    local_current_object = Weapon('n/a', 0, 1, 0, 0.0, 'n/a', 0, 'n/a', 0, 0, 'n/a', 0, 'n/a', 0, 0, 0, 0, 0, 0, 'n/a', 0)
+                    while True:
+                        local_line = local_file.readline()
+                        if not local_line:
+                            # There's nothing inside
+                            local_current_object = None
+                            break
+                        else:
+                            if "</Weapon>" in local_line:
+                                # The object is complete
+                                print("Weapon object created")
+                                print("Object named: {}".format(local_current_object.name))
+                                local_weapon_list.append(local_current_object)
+                                local_current_object = None
+                                break
+                            for phrase in WEAPON_KEY_STRING_PHRASES:
+                                # Check to see if any phrases are in the string
+                                if phrase in local_line:
+                                    # The phrase is in the string
+                                    # Remove the value from the string
+                                    local_current_value = str(remove_term(local_line, phrase))
+                                    # Apply the value to the corresponding object attribute
+                                    update_attr(local_current_object, phrase, local_current_value)
+                                else:
+                                    pass
+                            for phrase in WEAPON_KEY_FLOAT_PHRASES:
+                                if phrase in local_line:
+                                    # The phrase is in the string
+                                    # Remove the value from the string
+                                    local_current_value = float(remove_term(local_line, phrase))
+                                    # Apply the value to the corresponding object attribute
+                                    update_attr(local_current_object, phrase, local_current_value)
+                                else:
+                                    pass
+                            for phrase in WEAPON_KEY_INT_PHRASES:
+                                if phrase in local_line:
+                                    # The phrase is in the string
+                                    # Remove the value from the string
+                                    print(local_line)
+                                    local_current_value = int(remove_term(local_line, phrase))
+                                    # Apply the value to the corresponding object attribute
+                                    update_attr(local_current_object, phrase, local_current_value)
+                                else:
+                                    pass
+                elif '<Ammo xsi:type=' in local_line:
+                    # We have encountered the start of an ammo description
+                    local_current_object = Ammo('n/a', 0, 0, 'n/a', 0, 'n/a', 0, 0, 0, 0, 0, 0)
+                    while True:
+                        local_line = local_file.readline()
+                        if not local_line:
+                            # There's nothing inside
+                            local_current_object = None
+                            break
+                        else:
+                            if "</Ammo>" in local_line:
+                                # The object is complete
+                                local_ammo_list.append(local_current_object)
+                                print("Ammo object created")
+                                print("Object named: {}".format(local_current_object.name))
+                                local_current_object = None
+                                break
+                            for phrase in AMMO_KEY_STRING_PHRASES:
+                                # Check to see if any phrases are in the string
+                                if phrase in local_line:
+                                    # The phrase is in the string
+                                    # Remove the value from the string
+                                    local_current_value = str(remove_term(local_line, phrase))
+                                    # Apply the value to the corresponding object attribute
+                                    update_attr(local_current_object, phrase, local_current_value)
+                                else:
+                                    pass
+                            for phrase in AMMO_KEY_INT_PHRASES:
+                                if phrase in local_line:
+                                    # The phrase is in the string
+                                    # Remove the value from the string
+                                    local_current_value = (int(float(remove_term(local_line, phrase))))
+                                    # Apply the value to the corresponding object attribute
+                                    update_attr(local_current_object, phrase, local_current_value)
+                                else:
+                                    pass
+                elif '<AmmoMagazine>' in local_line:
+                    # We have encountered the start of an ammo magazine description
+                    local_current_object = AmmoMagazine('n/a', 0, 'n/a')
+                    while True:
+                        local_line = local_file.readline()
+                        if not local_line:
+                            # There's nothing inside
+                            local_current_object = None
+                            break
+                        else:
+                            if "</AmmoMagazine>" in local_line:
+                                # The object is complete
+                                local_ammo_magazine_list.append(local_current_object)
+                                print("Ammo Magazine Object created")
+                                print("Object named: {}".format(local_current_object.name))
+                                local_current_object = None
+                                break
+                            for phrase in AMMO_MAGAZINE_KEY_STRING_PHRASES:
+                                # Check to see if any phrases are in the string
+                                if phrase in local_line:
+                                    # The phrase is in the string
+                                    # Remove the value from the string
+                                    local_current_value = str(remove_term(local_line, phrase))
+                                    # Apply the value to the corresponding object attribute
+                                    update_attr(local_current_object, phrase, local_current_value)
+                                else:
+                                    pass
+                            for phrase in AMMO_MAGAZINE_KEY_INT_PHRASES:
+                                if phrase in local_line:
+                                    # The phrase is in the string
+                                    # Remove the value from the string
+                                    local_current_value = int(remove_term(local_line, phrase))
+                                    # Apply the value to the corresponding object attribute
+                                    update_attr(local_current_object, phrase, local_current_value)
+                                else:
+                                    pass
+                elif '</Definitions>' in local_line:
+                    # The file is out of data
+                    target_file += 1
+                    break
+                else:
+                    pass
     # At this point the xml data should be fully parsed into objects and object attributes
     # Now we need to match weapons up with their ammo and ammo magazine
     for local_weapon in local_weapon_list:
+        for local_ammo_magazine in local_ammo_magazine_list:
+            if local_ammo_magazine.name == local_weapon.ammo_magazine_subtype:
+                # This ammo magazine is the one that corresponds with this weapon
+                local_weapon.ammo_magazine_name = local_ammo_magazine.name
+                local_weapon.ammo_magazine_capacity = local_ammo_magazine.capacity
+                local_weapon.ammo_name = local_ammo_magazine.corresponding_ammo
         for local_ammo in local_ammo_list:
-            if local_ammo.name == local_weapon.ammo_magazine_subtype:
+            if local_ammo.name == local_weapon.ammo_name:
                 # This ammo object is the one that corresponds with this weapon
-                local_weapon.ammo_name = local_ammo.name
                 local_weapon.desired_speed = local_ammo.desired_speed
                 local_weapon.max_trajectory = local_ammo.max_trajectory
                 local_weapon.is_explosive = local_ammo.is_explosive
@@ -288,13 +295,10 @@ def main():
                 local_weapon.missile_explosion_damage = local_ammo.missile_explosion_damage
                 local_weapon.projectile_health_damage = local_ammo.projectile_health_damage
                 local_weapon.missile_health_damage = local_ammo.missile_health_damage
-        for local_ammo_magazine in local_ammo_magazine_list:
-            if local_ammo_magazine == local_weapon.ammo_magazine_subtype:
-                # This ammo magazine is the one that corresponds with this weapon
-                local_weapon.ammo_magazine_name = local_ammo_magazine.ammo_magazine_name
-                local_weapon.ammo_magazine_capacity = local_ammo_magazine.capacity
+
     # Here the weapon objects should be fully filled out and are ready to be transcribed into excel
     #print(local_weapon_list)
+    os.chdir(root_directory)
     excel_setup('main', local_weapon_list)
 
 
@@ -337,24 +341,32 @@ def update_attr(local_object, local_attribute, local_value):
         local_object.missile_health_damage = local_value
     elif local_attribute == "<Capacity>":
         local_object.capacity = local_value
+    elif local_attribute == "Subtype=":
+        local_object.corresponding_ammo = local_value
 
 
 # Used to extract a term from an xml line
 def remove_term(string, delimiter):
     local_phrase_1 = string.split(delimiter)
     if '=' in delimiter:
+        if '/>' in local_phrase_1[1]:
+            # The term is the end of a line, remove the />
+            local_phrase_1[1] = local_phrase_1[1].translate({ord('/'): None})
+            local_phrase_1[1] = local_phrase_1[1].translate({ord('>'): None})
         local_finished_delimiter = ' '
         local_phrase_2 = local_phrase_1[1].split(local_finished_delimiter)
         local_phrase_3 = local_phrase_2[0]
         local_phrase_4 = local_phrase_3.translate({ord('"'): None})
-        return local_phrase_4
+        local_phrase_5 = local_phrase_4.translate({ord("'"): None})
+        return local_phrase_5
     else:
         local_new_delimiter = delimiter.split('<')
         local_finished_delimiter = local_new_delimiter[1]
         local_phrase_2 = local_phrase_1[1].split(('</' + local_finished_delimiter))
         local_phrase_3 = local_phrase_2[0]
         local_phrase_4 = local_phrase_3.translate({ord('"'): None})
-        return local_phrase_4
+        local_phrase_5 = local_phrase_4.translate({ord("'"): None})
+        return local_phrase_5
 
 
 def excel_setup(file_name, local_weapon_list):
